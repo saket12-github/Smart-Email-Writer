@@ -32,7 +32,7 @@ The email should sound human, avoid robotic wording, and match the requested ton
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
       ],
-      max_tokens: 1024,
+      max_tokens: 600,
       temperature: 0.7,
       // Forces the model to output valid JSON (supported by most Together models)
       response_format: { type: 'json_object' },
