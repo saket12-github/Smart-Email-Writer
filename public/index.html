@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Email Writer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+
+      <!-- Header -->
+      <header>
+        <h1>Smart Email Writer</h1>
+        <p class="subtitle">Generate professional emails in seconds with AI</p>
+      </header>
+
+      <main>
+
+        <!-- Input Form -->
+        <section class="card form-section">
+          <form id="emailForm" novalidate>
+
+            <div class="form-group">
+              <label for="topic">Email Topic <span class="required">*</span></label>
+              <input
+                type="text"
+                id="topic"
+                name="topic"
+                placeholder="e.g., Requesting a deadline extension for the Q3 project"
+                required
+              />
+            </div>
+
+            <!-- Two columns on desktop: Recipient + Tone -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="recipientType">Recipient <span class="required">*</span></label>
+                <select id="recipientType" name="recipientType" required>
+                  <option value="">Select recipient...</option>
+                  <option value="manager">Manager</option>
+                  <option value="client">Client</option>
+                  <option value="colleague">Colleague</option>
+                  <option value="HR department">HR</option>
+                  <option value="vendor">Vendor</option>
+                  <option value="professor">Professor</option>
+                  <option value="team">Team</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="tone">Tone <span class="required">*</span></label>
+                <select id="tone" name="tone" required>
+                  <option value="">Select tone...</option>
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="formal">Formal</option>
+                  <option value="casual">Casual</option>
+                  <option value="assertive">Assertive</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="purpose">Email Purpose <span class="required">*</span></label>
+              <select id="purpose" name="purpose" required>
+                <option value="">Select purpose...</option>
+                <option value="request">Request</option>
+                <option value="follow-up">Follow-up</option>
+                <option value="introduction">Introduction</option>
+                <option value="complaint">Complaint</option>
+                <option value="thank you">Thank You</option>
+                <option value="apology">Apology</option>
+                <option value="announcement">Announcement</option>
+                <option value="reminder">Reminder</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="additionalContext">
+                Additional Context
+                <span class="optional">(optional)</span>
+              </label>
+              <textarea
+                id="additionalContext"
+                name="additionalContext"
+                rows="3"
+                placeholder="Any extra details that would help personalize the email..."
+              ></textarea>
+            </div>
+
+            <button type="submit" id="generateBtn">
+              <span id="btnText">Generate Email</span>
+              <span id="btnSpinner" class="spinner hidden" aria-hidden="true"></span>
+            </button>
+
+          </form>
+        </section>
+
+        <!-- Error Banner (hidden until an error occurs) -->
+        <div class="error-banner hidden" id="errorBanner" role="alert"></div>
+
+        <!-- Output Section (hidden until email is generated) -->
+        <section class="card output-section hidden" id="outputSection" aria-live="polite">
+          <h2 class="output-title">Your Generated Email</h2>
+
+          <div class="output-block">
+            <div class="output-header">
+              <h3>Subject Line</h3>
+              <button class="copy-btn" data-target="subjectOutput" aria-label="Copy subject line">
+                Copy
+              </button>
+            </div>
+            <p id="subjectOutput" class="subject-text"></p>
+          </div>
+
+          <div class="output-block">
+            <div class="output-header">
+              <h3>Email Body</h3>
+              <button class="copy-btn" data-target="bodyOutput" aria-label="Copy email body">
+                Copy
+              </button>
+            </div>
+            <!-- <pre> preserves newlines from the AI without any JS manipulation -->
+            <pre id="bodyOutput" class="body-text"></pre>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
