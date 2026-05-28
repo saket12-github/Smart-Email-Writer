@@ -14,7 +14,6 @@ const errorBanner = document.getElementById('errorBanner');
 // UI State Helpers
 // =============================================
 
-// Toggle loading state: disables button, shows spinner, hides stale output
 function setLoading(isLoading) {
   generateBtn.disabled = isLoading;
   btnText.textContent = isLoading ? 'Generating...' : 'Generate Email';
@@ -36,14 +35,6 @@ function hideError() {
   errorBanner.classList.add('hidden');
 }
 
-// Populate the output section and scroll it into view
-function showOutput(subject, body) {
-  subjectOutput.textContent = subject;
-  bodyOutput.textContent = body; // <pre> preserves newlines automatically
-  outputSection.classList.remove('hidden');
-  outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
 // =============================================
 // Copy to Clipboard
 // =============================================
@@ -57,7 +48,6 @@ async function handleCopy(e) {
 
   try {
     await navigator.clipboard.writeText(text);
-    // Briefly show "Copied!" feedback then revert
     e.currentTarget.textContent = 'Copied!';
     setTimeout(() => (e.currentTarget.textContent = 'Copy'), 2000);
   } catch {
@@ -72,7 +62,6 @@ async function handleCopy(e) {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  // Collect and trim form values
   const payload = {
     topic: document.getElementById('topic').value.trim(),
     recipientType: document.getElementById('recipientType').value,
@@ -81,7 +70,6 @@ form.addEventListener('submit', async (e) => {
     additionalContext: document.getElementById('additionalContext').value.trim(),
   };
 
-  // Client-side validation: check required fields are not empty
   if (!payload.topic || !payload.recipientType || !payload.tone || !payload.purpose) {
     showError('Please fill in all required fields before generating.');
     return;
@@ -96,19 +84,66 @@ form.addEventListener('submit', async (e) => {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
-
+    // If the request itself failed before streaming started (e.g. 400 validation error)
     if (!response.ok) {
-      // Server returned an error (4xx or 5xx) with a JSON error message
+      const data = await response.json();
       throw new Error(data.error || 'Failed to generate email. Please try again.');
     }
 
-    showOutput(data.subject, data.body);
+    // --- Read the SSE stream token by token ---
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';       // Accumulates all tokens received so far
+    let subjectDone = false; // Tracks whether we've extracted the subject line yet
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+
+      for (const line of chunk.split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') break;
+
+        try {
+          const parsed = JSON.parse(data);
+
+          if (parsed.error) throw new Error(parsed.error);
+
+          const token = parsed.token;
+          if (!token) continue;
+
+          fullText += token;
+
+          if (!subjectDone) {
+            // The model outputs "Subject: ...\n\n[body]"
+            // Wait until the double newline appears so we have the complete subject
+            if (fullText.includes('\n\n')) {
+              const splitAt = fullText.indexOf('\n\n');
+              subjectOutput.textContent = fullText.slice(0, splitAt).replace(/^Subject:\s*/i, '').trim();
+              bodyOutput.textContent = fullText.slice(splitAt + 2);
+
+              // Reveal the output section and scroll to it
+              outputSection.classList.remove('hidden');
+              outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              subjectDone = true;
+            }
+          } else {
+            // Subject already shown — just append each new token to the body
+            bodyOutput.textContent += token;
+          }
+        } catch (err) {
+          if (err instanceof SyntaxError) continue; // Skip malformed SSE chunks
+          throw err; // Re-throw real errors (e.g. parsed.error from server)
+        }
+      }
+    }
   } catch (err) {
-    // Catches both network errors and thrown errors from the block above
     showError(err.message);
   } finally {
-    // Always re-enable the button whether success or failure
     setLoading(false);
   }
 });
