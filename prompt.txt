@@ -1,0 +1,6 @@
+Task: Build a Smart Email Writer
+Tech Stack: Node.js, Express, TogetherAI API, frontend basic HTML/CSS/JavaScript
+
+
+Modern & professional codebase would be appreciated.
+The Node.js code should be easy to understand and explain.
